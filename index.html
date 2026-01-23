@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #05070a;
+            --card-bg: #0d1117;
+            --text-main: #ffffff;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            /* Allow vertical scrolling on mobile, horizontal on desktop */
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        /* Custom Scrollbar for desktop horizontal navigation */
+        body::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+
+        body::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        body::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 10px;
+        }
+
+        #countdown-grid {
+            display: grid;
+            /* Default Mobile: 1 column */
+            grid-template-columns: 1fr;
+            gap: 30px;
+            padding: 40px 20px;
+            justify-items: center;
+            width: 100%;
+        }
+
+        /* Responsive Breakpoints */
+        @media (min-width: 1024px) {
+            #countdown-grid {
+                /* Desktop: Forced single row */
+                grid-auto-flow: column;
+                grid-auto-columns: 280px;
+                grid-template-columns: none;
+                justify-content: center;
+                scale: 0.9;
+                padding: 50px;
+            }
+            body { overflow-y: hidden; } /* Hide vertical scroll only on large screens */
+        }
+
+        .card {
+            background: var(--card-bg);
+            text-align: center;
+            border-radius: 28px;
+            padding: 35px 30px;
+            box-sizing: border-box;
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            opacity: 0;
+            transform: translateY(15px);
+            animation: reveal 0.8s ease-out forwards;
+        }
+
+        /* Animated Rotating Border */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent,
+                    transparent,
+                    transparent,
+                    var(--accent));
+            animation: rotateBorder 4s linear infinite;
+            z-index: -2;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: var(--card-bg);
+            border-radius: 25px;
+            z-index: -1;
+        }
+
+        @keyframes rotateBorder {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes reveal {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Card Content Styling */
+        .perc-indicator {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--accent);
+            opacity: 0.8;
+        }
+
+        .label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: var(--text-dim);
+            font-weight: 600;
+        }
+
+        .days-val {
+            font-size: 4.5rem;
+            font-weight: 800;
+            line-height: 0.9;
+            margin: 10px 0;
+            letter-spacing: -4px;
+            background: linear-gradient(to bottom, var(--accent), #fff 50%, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 100% 200%;
+            animation: flowText 3s infinite;
+        }
+
+        @keyframes flowText {
+            0%, 100% { background-position: 0% 0%; }
+            50% { background-position: 0% 100%; }
+        }
+
+        .progress-track {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin: 20px 0 30px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            background: var(--accent);
+            box-shadow: 0 0 12px var(--accent);
+            width: 0;
+            transition: width 2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .exam-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin-top: auto;
+            color: #f8fafc;
+        }
+
+        .exam-date {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 6px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="countdown-grid"></div>
+
+    <script>
+        const examData = [
+            { name: "JEE Mains S1 2027", start: "2025-04-01", date: "2027-01-22", color: "#a855f7" },
+            { name: "Board Exams", start: "2026-04-01", date: "2027-02-15", color: "#10b981" },
+            { name: "JEE Mains S2 2027", start: "2025-04-01", date: "2027-04-04", color: "#f59e0b" },
+            { name: "NEET UG 2027", start: "2025-04-01", date: "2027-05-04", color: "#f43f5e" },
+            { name: "JEE Advanced 2027", start: "2025-04-01", date: "2027-05-18", color: "#0ea5e9" }
+        ];
+
+        function calculateDays(targetDate) {
+            const now = new Date();
+            const target = new Date(targetDate);
+            const diff = target - now;
+            return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+        }
+
+        function calculateProgress(startDate, targetDate) {
+            const start = new Date(startDate);
+            const end = new Date(targetDate);
+            const now = new Date();
+            const total = end - start;
+            const elapsed = now - start;
+            let val = (elapsed / total) * 100;
+            return Math.min(Math.max(val, 0), 100).toFixed(0);
+        }
+
+        function renderCountdowns() {
+            const grid = document.getElementById('countdown-grid');
+            grid.innerHTML = '';
+
+            examData.forEach((exam, index) => {
+                const daysLeft = calculateDays(exam.date);
+                const progress = calculateProgress(exam.start, exam.date);
+                const options = { day: 'numeric', month: 'short', year: 'numeric' };
+                const displayDate = new Date(exam.date).toLocaleDateString('en-IN', options);
+
+                const cardHTML = `
+                    <div class="card" style="--accent: ${exam.color}; animation-delay: ${index * 0.1}s">
+                        <div class="perc-indicator">${progress}%</div>
+                        <div class="label">Days Left</div>
+                        <div class="days-val">${daysLeft}</div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="bar-${index}"></div>
+                        </div>
+                        <div class="exam-title">${exam.name}</div>
+                        <div class="exam-date">${displayDate}</div>
+                    </div>
+                `;
+
+                grid.innerHTML += cardHTML;
+
+                setTimeout(() => {
+                    const bar = document.getElementById(`bar-${index}`);
+                    if (bar) bar.style.width = progress + '%';
+                }, 150);
+            });
+        }
+
+        renderCountdowns();
+    </script>
+</body>
+
+</html>
