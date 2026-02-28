@@ -23,7 +23,6 @@
             overscroll-behavior: none;
         }
 
-        /* Particle Canvas */
         #particle-canvas {
             position: fixed;
             top: 0; left: 0;
@@ -32,7 +31,6 @@
             z-index: 0;
         }
 
-        /* Header */
         #header {
             text-align: center;
             position: fixed;
@@ -66,12 +64,10 @@
             transition: opacity 0.6s ease;
         }
 
-        /* Urgency Banner */
         #urgency-banner {
             display: none;
         }
 
-        /* Ripple */
         .ripple {
             position: absolute;
             border-radius: 50%;
@@ -97,7 +93,6 @@
             overflow-y: auto;
         }
 
-        /* Custom Scrollbar for desktop horizontal navigation */
         body::-webkit-scrollbar {
             height: 8px;
             width: 8px;
@@ -114,11 +109,10 @@
 
         #countdown-grid {
             display: grid;
-            /* Default Mobile: 1 column */
             grid-template-columns: 1fr;
             gap: 30px;
             padding: 20px 20px 80px;
-            padding-top: 20px; /* overridden dynamically by JS */
+            padding-top: 20px;
             justify-items: center;
             width: 100%;
             box-sizing: border-box;
@@ -127,7 +121,6 @@
             perspective: 1000px;
         }
 
-        /* Responsive Breakpoints */
         @media (min-width: 1024px) {
             body {
                 display: flex;
@@ -138,7 +131,6 @@
                 overflow-x: auto;
             }
             #countdown-grid {
-                /* Desktop: Forced single row */
                 grid-auto-flow: column;
                 grid-auto-columns: 280px;
                 grid-template-columns: none;
@@ -174,7 +166,6 @@
             box-shadow: 0 20px 60px -10px var(--accent);
         }
 
-        /* Animated Rotating Border */
         .card::before {
             content: '';
             position: absolute;
@@ -182,10 +173,7 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: conic-gradient(transparent,
-                    transparent,
-                    transparent,
-                    var(--accent));
+            background: conic-gradient(transparent, transparent, transparent, var(--accent));
             animation: rotateBorder 4s linear infinite;
             z-index: -2;
         }
@@ -208,7 +196,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Card Content Styling */
         .perc-indicator {
             position: absolute;
             top: 20px;
@@ -286,7 +273,6 @@
             font-weight: 500;
         }
 
-        /* Footer */
         #footer {
             position: fixed;
             bottom: 0; left: 0; right: 0;
