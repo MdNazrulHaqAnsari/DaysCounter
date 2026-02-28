@@ -12,7 +12,78 @@
             --bg: #05070a;
             --card-bg: #0d1117;
             --text-main: #ffffff;
-            --text-dim: #94a3b8;
+            --text-dim: #ffffff;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            overscroll-behavior: none;
+        }
+
+        /* Particle Canvas */
+        #particle-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
+        #header {
+            text-align: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 18px 0 10px;
+            background: linear-gradient(to bottom, #05070a 60%, transparent);
+            pointer-events: none;
+        }
+
+        #live-clock {
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 3px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        #quote-box {
+            margin-top: 6px;
+            font-size: 0.7rem;
+            font-weight: 300;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            max-width: 420px;
+            text-align: center;
+            padding: 0 20px;
+            transition: opacity 0.6s ease;
+        }
+
+        /* Urgency Banner */
+        #urgency-banner {
+            display: none;
+        }
+
+        /* Ripple */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(0);
+            animation: rippleAnim 0.6s linear forwards;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes rippleAnim {
+            to { transform: scale(4); opacity: 0; }
         }
 
         body {
@@ -20,12 +91,9 @@
             color: var(--text-main);
             font-family: 'Plus Jakarta Sans', sans-serif;
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            /* Allow vertical scrolling on mobile, horizontal on desktop */
-            overflow-x: auto;
+            padding: 0;
+            display: block;
+            overflow-x: hidden;
             overflow-y: auto;
         }
 
@@ -49,13 +117,26 @@
             /* Default Mobile: 1 column */
             grid-template-columns: 1fr;
             gap: 30px;
-            padding: 40px 20px;
+            padding: 20px 20px 80px;
+            padding-top: 20px; /* overridden dynamically by JS */
             justify-items: center;
             width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 1;
+            perspective: 1000px;
         }
 
         /* Responsive Breakpoints */
         @media (min-width: 1024px) {
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                overflow-y: hidden;
+                overflow-x: auto;
+            }
             #countdown-grid {
                 /* Desktop: Forced single row */
                 grid-auto-flow: column;
@@ -63,9 +144,9 @@
                 grid-template-columns: none;
                 justify-content: center;
                 scale: 0.9;
-                padding: 50px;
+                padding: 100px 50px 50px;
+                width: auto;
             }
-            body { overflow-y: hidden; } /* Hide vertical scroll only on large screens */
         }
 
         .card {
@@ -83,6 +164,14 @@
             opacity: 0;
             transform: translateY(15px);
             animation: reveal 0.8s ease-out forwards;
+            cursor: default;
+            transition: transform 0.15s ease, box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        .card:hover {
+            box-shadow: 0 20px 60px -10px var(--accent);
         }
 
         /* Animated Rotating Border */
@@ -142,13 +231,23 @@
             font-size: 4.5rem;
             font-weight: 800;
             line-height: 0.9;
-            margin: 10px 0;
+            margin: 10px 0 4px;
             letter-spacing: -4px;
             background: linear-gradient(to bottom, var(--accent), #fff 50%, var(--accent));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             background-size: 100% 200%;
             animation: flowText 3s infinite;
+        }
+
+        .hms-val {
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 2px;
+            color: var(--accent);
+            opacity: 0.7;
+            margin-bottom: 4px;
         }
 
         @keyframes flowText {
@@ -186,13 +285,158 @@
             margin-top: 6px;
             font-weight: 500;
         }
+
+        /* Footer */
+        #footer {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            z-index: 10;
+            text-align: center;
+            padding: 10px 0 14px;
+            background: linear-gradient(to top, #05070a 60%, transparent);
+            pointer-events: none;
+        }
+
+        #footer a {
+            pointer-events: all;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            text-decoration: none;
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #475569;
+            transition: color 0.3s ease;
+        }
+
+        #footer a:hover { color: #94a3b8; }
+
+        #footer svg {
+            width: 14px; height: 14px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 
 <body>
+    <canvas id="particle-canvas"></canvas>
+
+    <div id="header">
+        <div id="live-clock"></div>
+        <div id="quote-box"></div>
+        <div id="urgency-banner"></div>
+    </div>
+
     <div id="countdown-grid"></div>
 
+    <footer id="footer">
+        <a href="https://github.com/MdNazrulHaqAnsari" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            Made by Mohammed Nazrul Haq Ansari
+        </a>
+    </footer>
+
     <script>
+        /* ── Quotes ── */
+        const quotes = [
+            "The secret of getting ahead is getting started.",
+            "Push yourself, because no one else is going to do it for you.",
+            "Great things never come from comfort zones.",
+            "Dream it. Wish it. Do it.",
+            "Success doesn't just find you. You have to go out and get it.",
+            "The harder you work for something, the greater you'll feel when you achieve it.",
+            "Don't stop when you're tired. Stop when you're done.",
+            "Wake up with determination. Go to bed with satisfaction."
+        ];
+        let quoteIndex = 0;
+        function cycleQuote() {
+            const box = document.getElementById('quote-box');
+            box.style.opacity = '0';
+            setTimeout(() => {
+                quoteIndex = (quoteIndex + 1) % quotes.length;
+                box.textContent = `"${quotes[quoteIndex]}"`;
+                box.style.opacity = '1';
+            }, 600);
+        }
+        document.getElementById('quote-box').textContent = `"${quotes[0]}"`;
+        setInterval(cycleQuote, 6000);
+
+        /* ── Live Clock ── */
+        function updateClock() {
+            const now = new Date();
+            const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = now.toLocaleDateString('en-IN', opts);
+            const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('live-clock').textContent = `${dateStr}  ·  ${timeStr}`;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        /* ── Dynamic header offset ── */
+        function adjustGridPadding() {
+            const headerH = document.getElementById('header').offsetHeight;
+            document.getElementById('countdown-grid').style.paddingTop = (headerH + 24) + 'px';
+        }
+        // Run after fonts/content load and on resize
+        window.addEventListener('load', adjustGridPadding);
+        window.addEventListener('resize', adjustGridPadding);
+        setTimeout(adjustGridPadding, 100);
+
+        /* ── Particle Background ── */
+        (function () {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let W, H, particles = [];
+
+            function resize() {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const COLORS = ['#a855f7', '#10b981', '#f59e0b', '#f43f5e', '#0ea5e9'];
+
+            class Particle {
+                constructor() { this.reset(); }
+                reset() {
+                    this.x = Math.random() * W;
+                    this.y = Math.random() * H;
+                    this.r = Math.random() * 1.5 + 0.4;
+                    this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+                    this.vx = (Math.random() - 0.5) * 0.3;
+                    this.vy = (Math.random() - 0.5) * 0.3;
+                    this.alpha = Math.random() * 0.5 + 0.2;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.globalAlpha = this.alpha;
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+                }
+            }
+
+            for (let i = 0; i < 120; i++) particles.push(new Particle());
+
+            function loop() {
+                ctx.clearRect(0, 0, W, H);
+                particles.forEach(p => { p.update(); p.draw(); });
+                requestAnimationFrame(loop);
+            }
+            loop();
+        })();
         const examData = [
             { name: "JEE Mains S1 2027", start: "2025-04-01", date: "2027-01-22", color: "#a855f7" },
             { name: "Board Exams", start: "2026-04-01", date: "2027-02-15", color: "#10b981" },
@@ -214,9 +458,56 @@
             const now = new Date();
             const total = end - start;
             const elapsed = now - start;
-            let val = (elapsed / total) * 100;
-            return Math.min(Math.max(val, 0), 100).toFixed(0);
+            return Math.min(Math.max((elapsed / total) * 100, 0), 100).toFixed(0);
         }
+
+        /* ── Rolling number animation ── */
+        function animateCount(el, target, duration = 1200) {
+            let startTs = 0;
+            const step = (timestamp) => {
+                if (!startTs) startTs = timestamp;
+                const progress = Math.min((timestamp - startTs) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 4);
+                el.textContent = Math.floor(eased * target);
+                if (progress < 1) requestAnimationFrame(step);
+                else el.textContent = target;
+            };
+            requestAnimationFrame(step);
+        }
+
+        /* ── 3D Tilt effect ── */
+        function addTilt(card) {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const dx = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2);
+                const dy = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2);
+                card.style.transform = `translateY(-6px) scale(1.03) rotateY(${dx * 8}deg) rotateX(${-dy * 8}deg)`;
+            });
+            card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+        }
+
+        function getHMS(targetDate) {
+            const now = new Date();
+            const diff = Math.max(0, new Date(targetDate) - now);
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            return { h: String(h).padStart(2,'0'), m: String(m).padStart(2,'0'), s: String(s).padStart(2,'0') };
+        }
+
+        /* ── Urgency banner (hidden) ── */
+        function updateUrgencyBanner() {}
+
+        /* ── Live HMS ticker ── */
+        function tickHMS() {
+            examData.forEach((exam, index) => {
+                const el = document.getElementById(`hms-${index}`);
+                if (!el) return;
+                const { h, m, s } = getHMS(exam.date);
+                el.textContent = `${h}h ${m}m ${s}s`;
+            });
+        }
+        setInterval(tickHMS, 1000);
 
         function renderCountdowns() {
             const grid = document.getElementById('countdown-grid');
@@ -227,12 +518,14 @@
                 const progress = calculateProgress(exam.start, exam.date);
                 const options = { day: 'numeric', month: 'short', year: 'numeric' };
                 const displayDate = new Date(exam.date).toLocaleDateString('en-IN', options);
+                const { h, m, s } = getHMS(exam.date);
 
                 const cardHTML = `
                     <div class="card" style="--accent: ${exam.color}; animation-delay: ${index * 0.1}s">
                         <div class="perc-indicator">${progress}%</div>
                         <div class="label">Days Left</div>
-                        <div class="days-val">${daysLeft}</div>
+                        <div class="days-val" id="count-${index}">0</div>
+                        <div class="hms-val" id="hms-${index}">${h}h ${m}m ${s}s</div>
                         <div class="progress-track">
                             <div class="progress-fill" id="bar-${index}"></div>
                         </div>
@@ -242,15 +535,27 @@
                 `;
 
                 grid.innerHTML += cardHTML;
+            });
 
-                setTimeout(() => {
+            setTimeout(() => {
+                examData.forEach((exam, index) => {
+                    const daysLeft = calculateDays(exam.date);
+                    const progress = calculateProgress(exam.start, exam.date);
+
+                    const countEl = document.getElementById(`count-${index}`);
+                    if (countEl) animateCount(countEl, daysLeft, 1000 + index * 150);
+
                     const bar = document.getElementById(`bar-${index}`);
                     if (bar) bar.style.width = progress + '%';
-                }, 150);
-            });
+
+                    const card = document.querySelectorAll('.card')[index];
+                    if (card) addTilt(card);
+                });
+            }, 150);
         }
 
         renderCountdowns();
+        window.scrollTo(0, 0);
     </script>
 </body>
 
